@@ -1,0 +1,40 @@
+client:
+  build:
+    context: ./angular
+  command: sh -c 'git clone  https://github.com/trascent/frontentMundial.git ;cd src/github.com/trascent/frontentMundial; git pull origin master; npm install; bower install; grunt serve;'
+  ports:
+    - '9000:9000'
+    - '35729:35729'
+  volumes:
+    - ./frontend/:/workspace/angular
+
+db:
+  image: postgres:9.6
+  environment:
+    - POSTGRES_PASSWORD: 123
+    - POSTGRES_USER: postgres
+    - POSTGRES_DB: equipos
+  ports:
+    - '5432:5432'
+  user: "$USER_ID"
+  volumes:
+    - ./database:/var/lib/postgresql/data
+    - ./script:/script
+    backend:
+      image: golang:1.8
+      build:
+        context: ./beego
+        args:
+          - PROXY=$PROXY
+          - USER_ID=$USER_ID
+      env_file:
+        - env.env
+      command: sh -c 'go get github.com/trascent/backendMundial;cd src/github.com/trascent/backendMundial;git pull origin master; go get; bee run'
+      ports:
+        - 8080:8080
+      volumes:
+        - ./workspace/go/src/github.com/trascent/:/home/developer/go/src/github.com/trascent
+        - /etc/passwd:/etc/passwd:ro
+      user: "$USER_ID"
+      depends_on:
+        - db
